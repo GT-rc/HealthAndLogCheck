@@ -1,0 +1,12 @@
+C:\Users\Glynnis Thomas\Source\Repos\HealthAndLogCheck\bin\Debug\netcoreapp2.2\HealthAndLogCheck.dll.config
+C:\Users\Glynnis Thomas\Source\Repos\HealthAndLogCheck\bin\Debug\netcoreapp2.2\HealthAndLogCheck.deps.json
+C:\Users\Glynnis Thomas\Source\Repos\HealthAndLogCheck\bin\Debug\netcoreapp2.2\HealthAndLogCheck.runtimeconfig.json
+C:\Users\Glynnis Thomas\Source\Repos\HealthAndLogCheck\bin\Debug\netcoreapp2.2\HealthAndLogCheck.runtimeconfig.dev.json
+C:\Users\Glynnis Thomas\Source\Repos\HealthAndLogCheck\bin\Debug\netcoreapp2.2\HealthAndLogCheck.dll
+C:\Users\Glynnis Thomas\Source\Repos\HealthAndLogCheck\bin\Debug\netcoreapp2.2\HealthAndLogCheck.pdb
+C:\Users\Glynnis Thomas\Source\Repos\HealthAndLogCheck\obj\Debug\netcoreapp2.2\HealthAndLogCheck.csprojAssemblyReference.cache
+C:\Users\Glynnis Thomas\Source\Repos\HealthAndLogCheck\obj\Debug\netcoreapp2.2\HealthAndLogCheck.csproj.CoreCompileInputs.cache
+C:\Users\Glynnis Thomas\Source\Repos\HealthAndLogCheck\obj\Debug\netcoreapp2.2\HealthAndLogCheck.AssemblyInfoInputs.cache
+C:\Users\Glynnis Thomas\Source\Repos\HealthAndLogCheck\obj\Debug\netcoreapp2.2\HealthAndLogCheck.AssemblyInfo.cs
+C:\Users\Glynnis Thomas\Source\Repos\HealthAndLogCheck\obj\Debug\netcoreapp2.2\HealthAndLogCheck.dll
+C:\Users\Glynnis Thomas\Source\Repos\HealthAndLogCheck\obj\Debug\netcoreapp2.2\HealthAndLogCheck.pdb

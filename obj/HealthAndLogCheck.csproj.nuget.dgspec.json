@@ -1,37 +1,31 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Melody Stohri\\source\\repos\\HealthAndLogCheck\\HealthAndLogCheck.csproj": {}
+    "C:\\Users\\Glynnis Thomas\\Source\\Repos\\HealthAndLogCheck\\HealthAndLogCheck.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Melody Stohri\\source\\repos\\HealthAndLogCheck\\HealthAndLogCheck.csproj": {
+    "C:\\Users\\Glynnis Thomas\\Source\\Repos\\HealthAndLogCheck\\HealthAndLogCheck.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Melody Stohri\\source\\repos\\HealthAndLogCheck\\HealthAndLogCheck.csproj",
+        "projectUniqueName": "C:\\Users\\Glynnis Thomas\\Source\\Repos\\HealthAndLogCheck\\HealthAndLogCheck.csproj",
         "projectName": "HealthAndLogCheck",
-        "projectPath": "C:\\Users\\Melody Stohri\\source\\repos\\HealthAndLogCheck\\HealthAndLogCheck.csproj",
-        "packagesPath": "C:\\Users\\Melody Stohri\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Melody Stohri\\source\\repos\\HealthAndLogCheck\\obj\\",
+        "projectPath": "C:\\Users\\Glynnis Thomas\\Source\\Repos\\HealthAndLogCheck\\HealthAndLogCheck.csproj",
+        "packagesPath": "C:\\Users\\Glynnis Thomas\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Glynnis Thomas\\Source\\Repos\\HealthAndLogCheck\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
         ],
         "configFilePaths": [
-          "C:\\Users\\Melody Stohri\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\DevExpress 18.1.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\DevExpress 19.1.config",
+          "C:\\Users\\Glynnis Thomas\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "netcoreapp2.2"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\DevExpress 18.1\\Components\\System\\Components\\Packages": {},
-          "C:\\Program Files (x86)\\DevExpress 19.1\\Components\\System\\Components\\Packages": {},
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "https://api.nuget.org/v3/index.json": {},
-          "https://artifacts.epiqglobal.com/artifactory/api/nuget/v3/epiq.nuget.aacer": {},
-          "https://nuget.devexpress.com/7B6JrXpWML677CVjZxLnnh3fJTxeDn8ms8YvRhK2Y9feviTZYz/api": {}
+          "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "netcoreapp2.2": {

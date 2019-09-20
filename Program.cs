@@ -14,6 +14,7 @@ using System.Net.NetworkInformation;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Data.Common;
 
 namespace HealthAndLogCheck
 {
@@ -33,19 +34,26 @@ namespace HealthAndLogCheck
             logger.Information("Starting logging.");
             // Console.WriteLine("Hello World!");
 
-            List<ConnectionCheckResult> dbMessageString = CheckConnections(logger);
-            List<ApiConnectionCheckResult> apiMessageString = ServerStatusPing(logger);
+            //List<ConnectionCheckResult> dbMessageString = CheckConnections(logger);
+            //List<ApiConnectionCheckResult> apiMessageString = ServerStatusPing(logger);
             List<LogCheckResult> logCheckResults = GetRecentLogs(logger);
-            Tuple<string, string> logFileResults = GetLogsFromFiles(logger);
-            SendUpdateEmails(dbMessageString, apiMessageString, logCheckResults, logFileResults, logger);
-
-            // Console.ReadLine();
+            //Tuple<string, string> logFileResults = GetLogsFromFiles(logger);
+            //SendDbAndApiUpdateEmails(dbMessageString, apiMessageString, logger);
+            //SendLogUpdateEmails(logCheckResults, logFileResults, logger);
+            var a = CreateLogMessageBody(logCheckResults, logger);
+            if (a == "") a = "No logs available for the specified dates.";
+            //var b = CreateDbMessageBody(dbMessageString, logger);
+            //var c = CreateApiMessageBody(apiMessageString, logger);
+            //Console.WriteLine(b);
+            //Console.WriteLine(c);
+            Console.WriteLine(a);
+            Console.ReadLine();
 
             logger.Information("Program complete.\n\n");
             // logger.CloseAndFlush();  // docs recommended including this, but it's not being recognized
         }
 
-        #region Service and log methods
+        #region Service and log check methods
 
         /// <summary>
         /// Pings the database, check will return an int if connected, otherwise returns an exception, 
@@ -95,13 +103,15 @@ namespace HealthAndLogCheck
             //todo update these
             var connections = new List<ConnectionStringSettings>
             {
-                ConfigurationManager.ConnectionStrings["TestServe"],
-                ConfigurationManager.ConnectionStrings["AnotherTest"],
+                ConfigurationManager.ConnectionStrings["AacerUtilitiesConnection"],
+                ConfigurationManager.ConnectionStrings["APLDataConnection"],
+                ConfigurationManager.ConnectionStrings["ASAPConnection"],
             };
             var queryStrings = new List<string>
             {
-                "select InfoId, InfoName from dbo.BasicInfo",
-                "select HazKey, OtherHaz from dbo.CanHazInfo",
+                "SELECT [id], [courtDBName] FROM [dbo].[CourtDBNames]",
+                "SELECT [AlertFrequencyId], [Description] FROM [aacer].[AlertFrequency]",
+                "SELECT [ID], [AACERSubDbName] FROM [dbo].[AACERDBProperties]"
             };
 
             var infoToCheck = CreateTuples(connections, queryStrings, logger);
@@ -189,105 +199,6 @@ namespace HealthAndLogCheck
         }
 
         /// <summary>
-        /// Goes out and pulls all the log information for the past 24 hours.
-        /// </summary>
-        /// <param name="logger"></param>
-        /// <returns>List of log objects</returns>
-        public static List<LogCheckResult> GetRecentLogs(Logger logger)
-        {
-            logger.Information("Checking for new logs.");
-            List<LogCheckResult> results = new List<LogCheckResult>(); 
-            //todo update
-            var connections = new List<ConnectionStringSettings>
-            {
-                ConfigurationManager.ConnectionStrings["AnotherTest"],
-            };
-            var queryStrings = new List<string>
-            {
-                "select Id, Message, Level, TimeStamp, Exception from dbo.Logs where TimeStamp > GETDATE()-1", 
-            };
-
-            var infoToCheck = CreateTuples(connections, queryStrings, logger);
-
-            foreach (var pair in infoToCheck)
-            {
-                try
-                {
-                    var connectionString = pair.Item1;
-                    var queryString = pair.Item2;
-
-                    using (SqlConnection connection = new SqlConnection(connectionString.ToString()))
-                    {
-                        using (SqlCommand command = new SqlCommand(queryString, connection))
-                        {
-                            command.Connection.Open();
-                            using (SqlDataReader response = command.ExecuteReader())
-                            {
-                                if (response.HasRows)
-                                {
-                                    while (response.Read())
-                                    {
-                                        var connectResult = new LogCheckResult
-                                        {
-                                            LogId = response.GetInt32(response.GetOrdinal("ID")),
-                                            Message = response.GetString(response.GetOrdinal("Message")),
-                                            Level = response.GetString(response.GetOrdinal("Level")),
-                                            TimeStamp = response.GetDateTime(response.GetOrdinal("TimeStamp")),
-                                            //Exception = (response.GetString(response.GetOrdinal("Exception")) != null)
-                                            //    ? response.GetString(response.GetOrdinal("Exception")) : "none",
-                                        };
-                                        results.Add(connectResult);
-                                    }
-                                }
-                                response.Close();
-                            }
-                        }
-                        connection.Close();
-                    }
-                    logger.Information("Log check was successful.");
-                }
-                catch (System.Exception ex)
-                {
-                    logger.Error($"There was an error when attempting to check for new logs: {ex}");
-                }
-            }
-            logger.Information("Done checking logs, moving on to next step.");
-            return results;
-        }
-
-        /// <summary>
-        /// Pulls the logged information from a file.
-        /// </summary>
-        /// <param name="logger"></param>
-        /// <returns>Tuple of strings</returns>
-        public static Tuple<string, string> GetLogsFromFiles(Logger logger)
-        {
-            logger.Information("Starting to pull information from text file logs.");
-            string results = "";
-            string fileName = "";
-            try
-            {
-                var fileLogPath = ConfigurationManager.AppSettings["fileTestLogFolder"];
-                DirectoryInfo info = new DirectoryInfo(fileLogPath);
-                FileInfo fileInfo = info.GetFiles().OrderByDescending(a => a.CreationTime).Take(2).Skip(1).FirstOrDefault();
-                fileName = fileInfo.FullName;
-                results = File.ReadAllText(fileInfo.FullName);
-                logger.Information("Done pulling information from text file logs.");
-            }
-            catch (Exception ex)
-            {
-                logger.Error($"There was an error while attempting to pull the logs from the file: {ex}");
-            }
-
-            logger.Information("Finished pulling logs from file, moving on to next step.");
-            return Tuple.Create(results, fileName);
-        }
-
-        #endregion
-
-        #region API methods
-
-        /// <summary>
         /// Pings the API server to verify that it is running and available.
         /// Reference: https://social.technet.microsoft.com/wiki/contents/articles/32243.c-how-to-check-whether-api-server-is-up-or-down.aspx
         /// </summary>
@@ -300,6 +211,10 @@ namespace HealthAndLogCheck
             var connections = new List<string>
             {
                 ConfigurationManager.AppSettings["appDevServer1"],
+                ConfigurationManager.AppSettings["webDevServer1"], 
+                //ConfigurationManager.AppSettings["appQafServer1"],
+                //ConfigurationManager.AppSettings["appQafServer2"],
+                //ConfigurationManager.AppSettings["webQafServer1"],
             };
 
             Ping checkApiServer = new Ping();
@@ -359,6 +274,122 @@ namespace HealthAndLogCheck
             return checkResults;
         }
 
+        /// <summary>
+        /// Goes out and pulls all the log information for the past 24 hours.
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <returns>List of log objects</returns>
+        public static List<LogCheckResult> GetRecentLogs(Logger logger)
+        {
+            logger.Information("Checking for new logs.");
+            List<LogCheckResult> results = new List<LogCheckResult>(); 
+            //todo update
+            var connections = new List<ConnectionStringSettings>
+            {
+                //ConfigurationManager.ConnectionStrings["AacerUtilitiesConnection"],
+                ConfigurationManager.ConnectionStrings["APLDataConnection"],
+                ConfigurationManager.ConnectionStrings["ASAPConnection"],
+                // utilities - application log
+                // asap - dsscruberrors
+            };
+            var queryStrings = new List<string>
+            {
+                //"SELECT TOP 10 [Id], [Message], [Level], [TimeStamp] FROM [dbo].[ApplicationLog] ORDER BY [TimeStamp] DESC",  // the other 2 seem ok, but this one does not like the timestamp col and keep timing out
+                "SELECT TOP 10 [EmailId], [Body], [Subject], [SentOn] FROM [aacer].[Email] ORDER BY [SentOn] DESC",    // > GETDATE()-1  // WHERE [CreatedOn] LIKE '2019-07-31%'
+                "SELECT TOP 10 [ID], [Error], [ErrorDT] FROM [dbo].[dsScrubErrors] ORDER BY [ErrorDT] DESC",
+            };
+
+            var infoToCheck = CreateTuples(connections, queryStrings, logger);
+            List<List<string>> temp = new List<List<string>>();
+            foreach (var pair in infoToCheck)
+            {
+                try
+                {
+                    var connectionString = pair.Item1;
+                    var queryString = pair.Item2;
+
+                    using (SqlConnection connection = new SqlConnection(connectionString.ToString()))
+                    {
+                        using (SqlCommand command = new SqlCommand(queryString, connection))
+                        {
+                            command.Connection.Open();
+                            using (SqlDataReader response = command.ExecuteReader())
+                            {
+                                if (response.HasRows)
+                                {
+                                    while (response.Read())
+                                    {
+                                        var tempItem = new List<string>();
+                                        
+                                        foreach (var col in response.Cast<DbDataRecord>())
+                                        {
+                                            for (int i = 0; i < col.FieldCount; i++)
+                                            {
+                                                tempItem.Add(i.ToString());
+                                            }
+                                        }
+                                        //var connectResult = new LogCheckResult
+                                        //{
+                                        //    LogId = response.GetInt32(response.GetOrdinal("Id")),
+                                        //    Message = response.GetString(response.GetOrdinal("Subject")),
+                                        //    Level = response.GetString(response.GetOrdinal("Body")),
+                                        //    TimeStamp = response.GetDateTime(response.GetOrdinal("SentOn")),
+                                        //    //Exception = (response.GetString(response.GetOrdinal("Exception")) != null)
+                                        //    //    ? response.GetString(response.GetOrdinal("Exception")) : "none",
+                                        //    AdditionalMessage = response.GetString(response.GetOrdinal("ErrorMessage"))
+                                        //};
+                                        //results.Add(connectResult);
+                                        temp.Add(tempItem);
+                                        Console.WriteLine(tempItem[0]);  // all just say: system.data.common.datarecordinternal 
+                                        Console.WriteLine(tempItem[1]);
+                                        Console.WriteLine(tempItem[2]);
+                                    }
+                                }
+                                response.Close();
+                            }
+                        }
+                        connection.Close();
+                    }
+                    logger.Information("Log check was successful.");
+                }
+                catch (System.Exception ex)
+                {
+                    logger.Error($"There was an error when attempting to check for new logs: {ex}");
+                }
+            }
+            logger.Information("Done checking logs, moving on to next step.");
+            return results;
+        }
+
+        /// <summary>
+        /// Pulls the logged information from a file.
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <returns>Tuple of strings</returns>
+        public static Tuple<string, string> GetLogsFromFiles(Logger logger)
+        {
+            logger.Information("Starting to pull information from text file logs.");
+            string results = "";
+            string fileName = "";
+
+            try
+            {
+                var fileLogPath = ConfigurationManager.AppSettings["fileTestLogFolder"];
+                DirectoryInfo info = new DirectoryInfo(fileLogPath);
+                FileInfo fileInfo = info.GetFiles().OrderByDescending(a => a.CreationTime).Take(2).Skip(1).FirstOrDefault();
+                fileName = fileInfo.FullName;
+                results = File.ReadAllText(fileInfo.FullName);
+                logger.Information("Done pulling information from text file logs.");
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"There was an error while attempting to pull the logs from the file: {ex}");
+            }
+
+            logger.Information("Finished pulling logs from file, moving on to next step.");
+            return Tuple.Create(results, fileName);
+        }
+
         #endregion
 
         #region Email methods
@@ -371,8 +402,8 @@ namespace HealthAndLogCheck
         /// <param name="logCheckResults"></param>
         /// <param name="logFileInfo"></param>
         /// <param name="logger"></param>
-        public static void SendUpdateEmails(List<ConnectionCheckResult> dbConnectionResults, List<ApiConnectionCheckResult> apiConnectionResults,
-             List<LogCheckResult> logCheckResults, Tuple<string, string> logFileInfo, Logger logger)
+        public static void SendDbAndApiUpdateEmails(List<ConnectionCheckResult> dbConnectionResults, List<ApiConnectionCheckResult> apiConnectionResults,
+             Logger logger)
         {
             logger.Information("Starting email method.");
             try
@@ -406,11 +437,7 @@ namespace HealthAndLogCheck
                 message.IsBodyHtml = true;
                 var messageBody1 = CreateDbMessageBody(dbConnectionResults, logger);
                 var messageBody2 = CreateApiMessageBody(apiConnectionResults, logger);
-                var messageBody3 = CreateLogMessageBody(logCheckResults, logger);
-                var messageBody4 = CreateFileLogMessageBody(logFileInfo, logger);
-                message.Body = "<h3>Database Results:</h3>" + messageBody1 + "<hr /><br /><h3>API Results:</h3>" + messageBody2 + 
-                    "<hr /><br /><h3>Recent log entries:</h3><br />" + messageBody3 + "<hr /><br /><h3>Recent log file entries:</h3><br />" 
-                    + messageBody4 + "<hr /><br /> <h3>Message Ends</h3>";
+                message.Body = "<h3>Database Results:</h3>" + messageBody1 + "<hr /><br /><h3>API Results:</h3>" + messageBody2 + "<br /> <h3>Message Ends</h3>";
 
                 smtp.Port = Int32.Parse(ConfigurationManager.AppSettings["port"]);
                 smtp.Host = ConfigurationManager.AppSettings["host"];
@@ -426,7 +453,47 @@ namespace HealthAndLogCheck
             }
             logger.Information("At end of email method.");
         }
-        
+
+        /// <summary>
+        /// Takes the information from the previous methods and sends it in an email to update on various statuses.
+        /// </summary>
+        /// <param name="logCheckResults"></param>
+        /// <param name="logFileInfo"></param>
+        /// <param name="logger"></param>
+        public static void SendLogUpdateEmails(List<LogCheckResult> logCheckResults, Tuple<string, string> logFileInfo, Logger logger)
+        {
+            try
+            {
+                MailMessage message = new MailMessage();
+                SmtpClient smtp = new SmtpClient();
+                var to = ConfigurationManager.AppSettings["emailsTo"];
+                var fromUser = ConfigurationManager.AppSettings["emailFrom"];
+                var fromPw = ConfigurationManager.AppSettings["emailPw"];
+
+                message.From = new MailAddress(fromUser);
+                message.To.Add(new MailAddress(to));
+                message.Subject = "Server Health Check Update";
+                message.IsBodyHtml = true;
+                var messageBody3 = CreateLogMessageBody(logCheckResults, logger);
+                var messageBody4 = CreateFileLogMessageBody(logFileInfo, logger);
+                message.Body = "<hr /><br /><h3>Recent log entries:</h3><br />" + messageBody3 + "<hr /><br /><h3>Recent log file entries:</h3><br />" +
+                    messageBody4 + "<hr /><br /> <h3>Message Ends</h3>";
+
+                smtp.Port = Int32.Parse(ConfigurationManager.AppSettings["port"]);
+                smtp.Host = ConfigurationManager.AppSettings["host"];
+                smtp.UseDefaultCredentials = false;
+                smtp.Credentials = new NetworkCredential(fromUser, fromPw);
+                smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
+                smtp.Send(message);
+                logger.Information("Email was delivered successfully.");
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"An error was encountered when sending log email: {ex}");
+            }
+            logger.Information("At end of log email method.");
+        }
+
         /// <summary>
         /// Converts the List<ConnectionCheckResult> into a string so it can be appended to the message body.
         /// </summary>
