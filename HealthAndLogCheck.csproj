@@ -10,6 +10,7 @@
     <Compile Remove="Log4NetExtensions.cs" />
     <Compile Remove="Log4NetLogger.cs" />
     <Compile Remove="Log4NetProvider.cs" />
+    <Compile Remove="LogCheckResult.cs" />
     <Compile Remove="LogHelper.cs" />
   </ItemGroup>
 
