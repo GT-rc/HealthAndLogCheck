@@ -32,22 +32,20 @@ namespace HealthAndLogCheck
                 .CreateLogger();
 
             logger.Information("Starting logging.");
-            // Console.WriteLine("Hello World!");
-
+            
             //List<ConnectionCheckResult> dbMessageString = CheckConnections(logger);
             //List<ApiConnectionCheckResult> apiMessageString = ServerStatusPing(logger);
-            List<LogCheckResult> logCheckResults = GetRecentLogs(logger);
-            //Tuple<string, string> logFileResults = GetLogsFromFiles(logger);
+            List<List<string>> logCheckResults = GetRecentLogs(logger); 
+            Tuple<string, string> logFileResults = GetLogsFromFiles(logger);
             //SendDbAndApiUpdateEmails(dbMessageString, apiMessageString, logger);
-            //SendLogUpdateEmails(logCheckResults, logFileResults, logger);
-            var a = CreateLogMessageBody(logCheckResults, logger);
-            if (a == "") a = "No logs available for the specified dates.";
+            SendLogUpdateEmails(logCheckResults, logFileResults, logger);
+            //var a = CreateLogMessageBody(logCheckResults, logger);
             //var b = CreateDbMessageBody(dbMessageString, logger);
             //var c = CreateApiMessageBody(apiMessageString, logger);
             //Console.WriteLine(b);
             //Console.WriteLine(c);
-            Console.WriteLine(a);
-            Console.ReadLine();
+            //Console.WriteLine(a);
+            //Console.ReadLine();
 
             logger.Information("Program complete.\n\n");
             // logger.CloseAndFlush();  // docs recommended including this, but it's not being recognized
@@ -279,27 +277,26 @@ namespace HealthAndLogCheck
         /// </summary>
         /// <param name="logger"></param>
         /// <returns>List of log objects</returns>
-        public static List<LogCheckResult> GetRecentLogs(Logger logger)
+        public static List<List<string>> GetRecentLogs(Logger logger) 
         {
             logger.Information("Checking for new logs.");
-            List<LogCheckResult> results = new List<LogCheckResult>(); 
+            
             //todo update
             var connections = new List<ConnectionStringSettings>
             {
-                //ConfigurationManager.ConnectionStrings["AacerUtilitiesConnection"],
-                ConfigurationManager.ConnectionStrings["APLDataConnection"],
-                ConfigurationManager.ConnectionStrings["ASAPConnection"],
-                // utilities - application log
-                // asap - dsscruberrors
+                //ConfigurationManager.ConnectionStrings["AacerUtilitiesConnection"],  // utilities - application logs // the other 2 seem ok, but this one does not like the timestamp col and keep timing out
+                ConfigurationManager.ConnectionStrings["APLDataConnection"],  // apl - email logs
+                ConfigurationManager.ConnectionStrings["ASAPConnection"],  // asap - dsscruberrors
             };
             var queryStrings = new List<string>
             {
-                //"SELECT TOP 10 [Id], [Message], [Level], [TimeStamp] FROM [dbo].[ApplicationLog] ORDER BY [TimeStamp] DESC",  // the other 2 seem ok, but this one does not like the timestamp col and keep timing out
+                //"SELECT TOP 10 [Id], [Message], [Level], [TimeStamp] FROM [dbo].[ApplicationLog] ORDER BY [TimeStamp] DESC",  
                 "SELECT TOP 10 [EmailId], [Body], [Subject], [SentOn] FROM [aacer].[Email] ORDER BY [SentOn] DESC",    // > GETDATE()-1  // WHERE [CreatedOn] LIKE '2019-07-31%'
                 "SELECT TOP 10 [ID], [Error], [ErrorDT] FROM [dbo].[dsScrubErrors] ORDER BY [ErrorDT] DESC",
             };
 
             var infoToCheck = CreateTuples(connections, queryStrings, logger);
+
             List<List<string>> temp = new List<List<string>>();
             foreach (var pair in infoToCheck)
             {
@@ -320,29 +317,51 @@ namespace HealthAndLogCheck
                                     while (response.Read())
                                     {
                                         var tempItem = new List<string>();
-                                        
-                                        foreach (var col in response.Cast<DbDataRecord>())
+
+                                        for (int x = 0; x < response.FieldCount; x++)
                                         {
-                                            for (int i = 0; i < col.FieldCount; i++)
+                                            tempItem.Add(response.GetName(x));
+                                        }
+                                        
+                                        while (response.Read())
+                                        {
+                                            for (int y = 0; y < response.FieldCount; y++)
                                             {
-                                                tempItem.Add(i.ToString());
+                                                var theCase = response.GetDataTypeName(y);
+
+                                                switch (theCase)
+                                                {
+                                                    case "int":
+                                                        tempItem.Add(response.GetInt32(y).ToString());
+                                                        break;
+                                                    case "tinyint":
+                                                        tempItem.Add(response.GetInt32(y).ToString());
+                                                        break;
+                                                    case "bigint":
+                                                        tempItem.Add(response.GetInt32(y).ToString());
+                                                        break;
+                                                    case "varchar":
+                                                        tempItem.Add(response.GetString(y));
+                                                        break;
+                                                    case "nvarchar":
+                                                        tempItem.Add(response.GetString(y));
+                                                        break;
+                                                    case "datetime":
+                                                        tempItem.Add(response.GetDateTime(y).ToString());
+                                                        break;
+                                                    case "datetime2":
+                                                        tempItem.Add(response.GetDateTime(y).ToString());
+                                                        break;
+                                                    case "datetimeoffset":
+                                                        tempItem.Add(response.GetDateTime(y).ToString());
+                                                        break;
+                                                    default:
+                                                        break;
+                                                }
                                             }
                                         }
-                                        //var connectResult = new LogCheckResult
-                                        //{
-                                        //    LogId = response.GetInt32(response.GetOrdinal("Id")),
-                                        //    Message = response.GetString(response.GetOrdinal("Subject")),
-                                        //    Level = response.GetString(response.GetOrdinal("Body")),
-                                        //    TimeStamp = response.GetDateTime(response.GetOrdinal("SentOn")),
-                                        //    //Exception = (response.GetString(response.GetOrdinal("Exception")) != null)
-                                        //    //    ? response.GetString(response.GetOrdinal("Exception")) : "none",
-                                        //    AdditionalMessage = response.GetString(response.GetOrdinal("ErrorMessage"))
-                                        //};
-                                        //results.Add(connectResult);
                                         temp.Add(tempItem);
-                                        Console.WriteLine(tempItem[0]);  // all just say: system.data.common.datarecordinternal 
-                                        Console.WriteLine(tempItem[1]);
-                                        Console.WriteLine(tempItem[2]);
+                                        response.NextResult();
                                     }
                                 }
                                 response.Close();
@@ -357,8 +376,9 @@ namespace HealthAndLogCheck
                     logger.Error($"There was an error when attempting to check for new logs: {ex}");
                 }
             }
+
             logger.Information("Done checking logs, moving on to next step.");
-            return results;
+            return temp;
         }
 
         /// <summary>
@@ -460,7 +480,7 @@ namespace HealthAndLogCheck
         /// <param name="logCheckResults"></param>
         /// <param name="logFileInfo"></param>
         /// <param name="logger"></param>
-        public static void SendLogUpdateEmails(List<LogCheckResult> logCheckResults, Tuple<string, string> logFileInfo, Logger logger)
+        public static void SendLogUpdateEmails(List<List<string>> logCheckResults, Tuple<string, string> logFileInfo, Logger logger)  
         {
             try
             {
@@ -475,6 +495,10 @@ namespace HealthAndLogCheck
                 message.Subject = "Server Health Check Update";
                 message.IsBodyHtml = true;
                 var messageBody3 = CreateLogMessageBody(logCheckResults, logger);
+                if (messageBody3 == "")
+                {
+                    messageBody3 = "No logs available.";
+                }
                 var messageBody4 = CreateFileLogMessageBody(logFileInfo, logger);
                 message.Body = "<hr /><br /><h3>Recent log entries:</h3><br />" + messageBody3 + "<hr /><br /><h3>Recent log file entries:</h3><br />" +
                     messageBody4 + "<hr /><br /> <h3>Message Ends</h3>";
@@ -609,27 +633,21 @@ namespace HealthAndLogCheck
         /// <param name="logCheckResults"></param>
         /// <param name="logger"></param>
         /// <returns>string</returns>
-        public static string CreateLogMessageBody(List<LogCheckResult> logCheckResults, Logger logger)
+        public static string CreateLogMessageBody(List<List<string>> logCheckResults, Logger logger)
         {
             logger.Information("Creating Log Section of Email Body.");
             StringBuilder sb = new StringBuilder();
-            
+
             foreach (var item in logCheckResults)
             {
-                sb.Append("Log item ID: ");
-                sb.Append("<b>" + item.LogId.ToString() + "</b>");
-                sb.Append(" at the urgency level of ");
-                sb.Append("<em>" + item.Level + "</em>");
-                sb.Append("<br />");
-                sb.Append("Was added to the logs at: ");
-                sb.Append("<em>" + item.TimeStamp.ToString() + "</em>");
-                sb.Append("<br />The message was: ");
-                sb.Append("<em>" + item.Message + "</em>");
-                sb.Append("<br /><br />");
-                sb.Append("If any exceptions occurred, they will appear below:<br /><br />");
-                sb.Append(item.Exception);
-                sb.Append("<br />-----------------------------------------<br /><br />");   
+                foreach (var thing in item)
+                {
+                    sb.Append(thing);
+                    sb.Append("<br />");
+                }
+                sb.Append("<hr />");
             }
+
             logger.Information("Completing Logging Section of Email Body.");
             return sb.ToString();
         }

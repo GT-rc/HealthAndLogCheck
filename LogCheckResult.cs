@@ -17,3 +17,20 @@ namespace HealthAndLogCheck
 
     }
 }
+
+//foreach (var item in logCheckResults)
+//{
+//    sb.Append("Log item ID: ");
+//    sb.Append("<b>" + item.LogId.ToString() + "</b>");
+//    sb.Append(" at the urgency level of ");
+//    sb.Append("<em>" + item.Level + "</em>");
+//    sb.Append("<br />");
+//    sb.Append("Was added to the logs at: ");
+//    sb.Append("<em>" + item.TimeStamp.ToString() + "</em>");
+//    sb.Append("<br />The message was: ");
+//    sb.Append("<em>" + item.Message + "</em>");
+//    sb.Append("<br /><br />");
+//    sb.Append("If any exceptions occurred, they will appear below:<br /><br />");
+//    sb.Append(item.Exception);
+//    sb.Append("<br />-----------------------------------------<br /><br />");   
+//}
