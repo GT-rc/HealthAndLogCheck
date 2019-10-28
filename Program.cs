@@ -32,23 +32,24 @@ namespace HealthAndLogCheck
                 .CreateLogger();
 
             logger.Information("Starting logging.");
-            
-            //List<ConnectionCheckResult> dbMessageString = CheckConnections(logger);
-            //List<ApiConnectionCheckResult> apiMessageString = ServerStatusPing(logger);
+            Console.WriteLine("Starting...");
+            List<ConnectionCheckResult> dbMessageString = CheckConnections(logger);
+            List<ApiConnectionCheckResult> apiMessageString = ServerStatusPing(logger);
             List<List<string>> logCheckResults = GetRecentLogs(logger); 
             Tuple<string, string> logFileResults = GetLogsFromFiles(logger);
-            //SendDbAndApiUpdateEmails(dbMessageString, apiMessageString, logger);
+            SendDbAndApiUpdateEmails(dbMessageString, apiMessageString, logger);
             SendLogUpdateEmails(logCheckResults, logFileResults, logger);
             //var a = CreateLogMessageBody(logCheckResults, logger);
             //var b = CreateDbMessageBody(dbMessageString, logger);
             //var c = CreateApiMessageBody(apiMessageString, logger);
-            //Console.WriteLine(b);
-            //Console.WriteLine(c);
-            //Console.WriteLine(a);
-            //Console.ReadLine();
-
+            //var d = CreateFileLogMessageBody(logFileResults, logger);
+            //Console.WriteLine("db message body" + b);
+            //Console.WriteLine("api message body" + c);
+            //Console.WriteLine("log message body" + a);
+            //Console.WriteLine("log file message body" + d);
+            Console.WriteLine("Finishing...");
             logger.Information("Program complete.\n\n");
-            // logger.CloseAndFlush();  // docs recommended including this, but it's not being recognized
+            //logger.CloseAndFlush();  // docs recommended including this, but it's not being recognized
         }
 
         #region Service and log check methods
@@ -284,14 +285,14 @@ namespace HealthAndLogCheck
             //todo update
             var connections = new List<ConnectionStringSettings>
             {
-                //ConfigurationManager.ConnectionStrings["AacerUtilitiesConnection"],  // utilities - application logs // the other 2 seem ok, but this one does not like the timestamp col and keep timing out
+                ConfigurationManager.ConnectionStrings["AacerUtilitiesConnection"],  // utilities - application logs
                 ConfigurationManager.ConnectionStrings["APLDataConnection"],  // apl - email logs
                 ConfigurationManager.ConnectionStrings["ASAPConnection"],  // asap - dsscruberrors
             };
             var queryStrings = new List<string>
             {
-                //"SELECT TOP 10 [Id], [Message], [Level], [TimeStamp] FROM [dbo].[ApplicationLog] ORDER BY [TimeStamp] DESC",  
-                "SELECT TOP 10 [EmailId], [Body], [Subject], [SentOn] FROM [aacer].[Email] ORDER BY [SentOn] DESC",    // > GETDATE()-1  // WHERE [CreatedOn] LIKE '2019-07-31%'
+                "SELECT TOP 10 [Id], [Message], [Level], [TimeStamp] FROM [dbo].[ApplicationLog] ORDER BY [TimeStamp] DESC",
+                "SELECT TOP 10 [EmailId], [Body], [Subject], [SentOn] FROM [aacer].[Email] ORDER BY [SentOn] DESC",  
                 "SELECT TOP 10 [ID], [Error], [ErrorDT] FROM [dbo].[dsScrubErrors] ORDER BY [ErrorDT] DESC",
             };
 
@@ -318,11 +319,6 @@ namespace HealthAndLogCheck
                                     {
                                         var tempItem = new List<string>();
 
-                                        for (int x = 0; x < response.FieldCount; x++)
-                                        {
-                                            tempItem.Add(response.GetName(x));
-                                        }
-                                        
                                         while (response.Read())
                                         {
                                             for (int y = 0; y < response.FieldCount; y++)
@@ -353,7 +349,7 @@ namespace HealthAndLogCheck
                                                         tempItem.Add(response.GetDateTime(y).ToString());
                                                         break;
                                                     case "datetimeoffset":
-                                                        tempItem.Add(response.GetDateTime(y).ToString());
+                                                        tempItem.Add(response.GetDateTimeOffset(y).ToString());
                                                         break;
                                                     default:
                                                         break;
@@ -394,7 +390,7 @@ namespace HealthAndLogCheck
 
             try
             {
-                var fileLogPath = ConfigurationManager.AppSettings["fileTestLogFolder"];
+                var fileLogPath = ConfigurationManager.AppSettings["localFileTestLogFolder"];
                 DirectoryInfo info = new DirectoryInfo(fileLogPath);
                 FileInfo fileInfo = info.GetFiles().OrderByDescending(a => a.CreationTime).Take(2).Skip(1).FirstOrDefault();
                 fileName = fileInfo.FullName;
@@ -637,15 +633,27 @@ namespace HealthAndLogCheck
         {
             logger.Information("Creating Log Section of Email Body.");
             StringBuilder sb = new StringBuilder();
+            // todo update on change
+            string[] logArray = { "AACERUtilities.ApplicationLog", "APLData.Email", "ASAP.dsScrubErrors" };
 
-            foreach (var item in logCheckResults)
+            for (var item = 0; item < logCheckResults.Count; item++)
             {
-                foreach (var thing in item)
+                sb.Append($"\n*********<h4>Log Start: {logArray[item]}</h4>*********\n<br />");
+                foreach (var thing in logCheckResults[item])
                 {
-                    sb.Append(thing);
-                    sb.Append("<br />");
+                    int a;
+                    if(int.TryParse(thing, out a))
+                    {
+                        sb.Append("<br /><br />");
+                        sb.Append(thing);
+                        sb.Append("<br />");
+                    } 
+                    else
+                    {
+                        sb.Append(thing);
+                        sb.Append("<br />");
+                    }
                 }
-                sb.Append("<hr />");
             }
 
             logger.Information("Completing Logging Section of Email Body.");
@@ -672,7 +680,7 @@ namespace HealthAndLogCheck
             foreach (var line in results)
             {
                 sb.Append(line);
-                sb.Append("<br />");
+                sb.Append("\n<br />");
             }
 
             logger.Information("Completing Log File Section of Email Body");
