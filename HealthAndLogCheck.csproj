@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="app.Release.config" />
     <None Remove="log4net.config" />
   </ItemGroup>
 

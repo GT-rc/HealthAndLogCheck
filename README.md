@@ -129,6 +129,7 @@ Log Check Result
 
 *Other Notes*
 I have moved most of the comments out of the code and into this documentation, with a few exceptions. 
+I have replaced all real data with 'X's to mask non-public information.
 
 Options for next steps: 
 - Add JS to make sections collapsible

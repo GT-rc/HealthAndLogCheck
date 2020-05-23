@@ -39,14 +39,6 @@ namespace HealthAndLogCheck
             Tuple<string, string> logFileResults = GetLogsFromFiles(logger);
             SendDbAndApiUpdateEmails(dbMessageString, apiMessageString, logger);
             SendLogUpdateEmails(logCheckResults, logFileResults, logger);
-            //var a = CreateLogMessageBody(logCheckResults, logger);
-            //var b = CreateDbMessageBody(dbMessageString, logger);
-            //var c = CreateApiMessageBody(apiMessageString, logger);
-            //var d = CreateFileLogMessageBody(logFileResults, logger);
-            //Console.WriteLine("db message body" + b);
-            //Console.WriteLine("api message body" + c);
-            //Console.WriteLine("log message body" + a);
-            //Console.WriteLine("log file message body" + d);
             Console.WriteLine("Finishing...");
             logger.Information("Program complete.\n\n");
             //logger.CloseAndFlush();  // docs recommended including this, but it's not being recognized
@@ -102,15 +94,15 @@ namespace HealthAndLogCheck
             //todo update these
             var connections = new List<ConnectionStringSettings>
             {
-                ConfigurationManager.ConnectionStrings["AacerUtilitiesConnection"],
-                ConfigurationManager.ConnectionStrings["APLDataConnection"],
-                ConfigurationManager.ConnectionStrings["ASAPConnection"],
+                ConfigurationManager.ConnectionStrings["X"],
+                ConfigurationManager.ConnectionStrings["X"],
+                ConfigurationManager.ConnectionStrings["X"],
             };
             var queryStrings = new List<string>
             {
-                "SELECT [id], [courtDBName] FROM [dbo].[CourtDBNames]",
-                "SELECT [AlertFrequencyId], [Description] FROM [aacer].[AlertFrequency]",
-                "SELECT [ID], [AACERSubDbName] FROM [dbo].[AACERDBProperties]"
+                "SELECT [id], [x] FROM [d].[X]",
+                "SELECT [id], [x] FROM [d].[X]",
+                "SELECT [id], [x] FROM [d].[X]"
             };
 
             var infoToCheck = CreateTuples(connections, queryStrings, logger);
@@ -209,11 +201,8 @@ namespace HealthAndLogCheck
             //todo update here
             var connections = new List<string>
             {
-                ConfigurationManager.AppSettings["appDevServer1"],
-                ConfigurationManager.AppSettings["webDevServer1"], 
-                //ConfigurationManager.AppSettings["appQafServer1"],
-                //ConfigurationManager.AppSettings["appQafServer2"],
-                //ConfigurationManager.AppSettings["webQafServer1"],
+                ConfigurationManager.AppSettings["X"],
+                ConfigurationManager.AppSettings["X"], 
             };
 
             Ping checkApiServer = new Ping();
@@ -245,7 +234,7 @@ namespace HealthAndLogCheck
                             CheckedOn = DateTime.Now
                         };
                         checkResults.Add(temp);
-                        logger.Information($"{serverResponse.Address.ToString()} is connected.");
+                        logger.Information($"{serverResponse.Address} is connected.");
                     }
                     else
                     {
@@ -261,7 +250,7 @@ namespace HealthAndLogCheck
                             CheckedOn = DateTime.Now
                         };
                         checkResults.Add(temp);
-                        logger.Warning($"{serverResponse.Address.ToString()} is not connected. See Details: \n {serverResponse.Status.ToString()}");
+                        logger.Warning($"{serverResponse.Address} is not connected. See Details: \n {serverResponse.Status.ToString()}");
                     }
                 }
             }
@@ -285,15 +274,15 @@ namespace HealthAndLogCheck
             //todo update
             var connections = new List<ConnectionStringSettings>
             {
-                ConfigurationManager.ConnectionStrings["AacerUtilitiesConnection"],  // utilities - application logs
-                ConfigurationManager.ConnectionStrings["APLDataConnection"],  // apl - email logs
-                ConfigurationManager.ConnectionStrings["ASAPConnection"],  // asap - dsscruberrors
+                ConfigurationManager.ConnectionStrings["X"], 
+                ConfigurationManager.ConnectionStrings["X"], 
+                ConfigurationManager.ConnectionStrings["X"], 
             };
             var queryStrings = new List<string>
             {
-                "SELECT TOP 10 [Id], [Message], [Level], [TimeStamp] FROM [dbo].[ApplicationLog] ORDER BY [TimeStamp] DESC",
-                "SELECT TOP 10 [EmailId], [Body], [Subject], [SentOn] FROM [aacer].[Email] ORDER BY [SentOn] DESC",  
-                "SELECT TOP 10 [ID], [Error], [ErrorDT] FROM [dbo].[dsScrubErrors] ORDER BY [ErrorDT] DESC",
+                "SELECT TOP 10 [Id], [X], [X], [X] FROM [d].[X] ORDER BY [X] DESC",
+                "SELECT TOP 10 [Id], [X], [X], [X] FROM [d].[X] ORDER BY [X] DESC",  
+                "SELECT TOP 10 [Id], [X], [X] FROM [d].[X] ORDER BY [X] DESC",
             };
 
             var infoToCheck = CreateTuples(connections, queryStrings, logger);
@@ -390,7 +379,7 @@ namespace HealthAndLogCheck
 
             try
             {
-                var fileLogPath = ConfigurationManager.AppSettings["localFileTestLogFolder"];
+                var fileLogPath = ConfigurationManager.AppSettings["X"];
                 DirectoryInfo info = new DirectoryInfo(fileLogPath);
                 FileInfo fileInfo = info.GetFiles().OrderByDescending(a => a.CreationTime).Take(2).Skip(1).FirstOrDefault();
                 fileName = fileInfo.FullName;
@@ -429,23 +418,6 @@ namespace HealthAndLogCheck
                 var to = ConfigurationManager.AppSettings["emailsTo"];
                 var fromUser = ConfigurationManager.AppSettings["emailFrom"];
                 var fromPw = ConfigurationManager.AppSettings["emailPw"];
-
-                // Initial attempt at making sections collapsible - saving in case it's useful later
-                //var styling = @"<style type='text / css'>
-                //                 .row { vertical - align: top; height: auto!important; }
-                //                 .list { display: none; }
-                //                 .show { display: none; }
-                //                 .hide: target + .show { display: inline; }
-                //                 .hide: target { display: none; }
-                //                 .hide: target ~ .list { display: inline; }
-                //                 @media print { .hide, .show { display: none; } }
-                //                </style>
-                //                </head>";
-                //var temp = styling + "<div data-collapse='accordion persist'<a href='#'><h3>Database Results:</h3></a>" + "<div>" + messageBody1 + "</div>" +
-                //    "<hr /><br /><div data-collapse='accordion persist'<a href='#'><h3>API Results:</h3></a>" + "<div>" + messageBody2 + "</div>" +
-                //    "<hr /><br /><div data-collapse='accordion persist'<a href='#'><h3>Recent log entries:</h3></a><br />" + "<div>" + messageBody3 + "</div>"
-                //    + "<hr /><br /><div data-collapse='accordion persist'<a href='#'><h3>Recent log file entries:</h3></a><br />" + "<div>" + messageBody4 +
-                //    "</div>" + "<hr /><br /> <h3>Message Ends</h3>";
 
                 message.From = new MailAddress(fromUser);
                 message.To.Add(new MailAddress(to));
@@ -634,7 +606,7 @@ namespace HealthAndLogCheck
             logger.Information("Creating Log Section of Email Body.");
             StringBuilder sb = new StringBuilder();
             // todo update on change
-            string[] logArray = { "AACERUtilities.ApplicationLog", "APLData.Email", "ASAP.dsScrubErrors" };
+            string[] logArray = { "X", "X", "X" };
 
             for (var item = 0; item < logCheckResults.Count; item++)
             {

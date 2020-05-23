@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Glynnis Thomas\\Source\\Repos\\HealthAndLogCheck\\HealthAndLogCheck.csproj": {}
+    "C:\\Users\\Janet\\CodeStuff\\HealthAndLogCheck\\HealthAndLogCheck.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Glynnis Thomas\\Source\\Repos\\HealthAndLogCheck\\HealthAndLogCheck.csproj": {
+    "C:\\Users\\Janet\\CodeStuff\\HealthAndLogCheck\\HealthAndLogCheck.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Glynnis Thomas\\Source\\Repos\\HealthAndLogCheck\\HealthAndLogCheck.csproj",
+        "projectUniqueName": "C:\\Users\\Janet\\CodeStuff\\HealthAndLogCheck\\HealthAndLogCheck.csproj",
         "projectName": "HealthAndLogCheck",
-        "projectPath": "C:\\Users\\Glynnis Thomas\\Source\\Repos\\HealthAndLogCheck\\HealthAndLogCheck.csproj",
-        "packagesPath": "C:\\Users\\Glynnis Thomas\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Glynnis Thomas\\Source\\Repos\\HealthAndLogCheck\\obj\\",
+        "projectPath": "C:\\Users\\Janet\\CodeStuff\\HealthAndLogCheck\\HealthAndLogCheck.csproj",
+        "packagesPath": "C:\\Users\\Janet\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Janet\\CodeStuff\\HealthAndLogCheck\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
         ],
         "configFilePaths": [
-          "C:\\Users\\Glynnis Thomas\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Janet\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -121,10 +121,16 @@
             }
           },
           "imports": [
-            "net461"
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
           ],
           "assetTargetFallback": true,
-          "warn": true
+          "warn": true,
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.201\\RuntimeIdentifierGraph.json"
         }
       }
     }
